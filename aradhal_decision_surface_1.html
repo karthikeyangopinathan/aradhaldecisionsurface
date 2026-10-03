@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aradhal · Decision Surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1b1a; --ink-soft:#5f5d58; --ink-faint:#9a978f;
+    --paper:#ffffff; --panel:#fbfaf7; --hair:#e9e6df; --hair-strong:#dcd8cf;
+    --signal:#F7941E; --signal-ink:#b5650a;
+    --founder:#F7941E; --observed:#3FA845; --mentor:#b4ac9f;
+    --s0:#16C2B3;--s1:#3B82E0;--s2:#4FB63C;--s3:#AEBE1C;--s4:#F7941E;--s5:#EA3B2E;--s6:#EC4899;--s7:#7C4DD6;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{line-height:1.45}
+  .wrap{max-width:1300px;margin:0 auto;padding:26px 24px 72px}
+
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+    border-bottom:1px solid var(--hair);padding-bottom:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .mark{width:40px;height:20px;flex:none}
+  h1{font-size:19px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--ink-soft);font-size:13.5px;margin:4px 0 0;max-width:70ch}
+  .lenswitch{display:flex;border:1px solid var(--hair-strong);border-radius:999px;overflow:hidden;background:var(--paper)}
+  .lenswitch button{appearance:none;border:0;background:transparent;font:inherit;font-weight:600;
+    font-size:13px;color:var(--ink-soft);padding:8px 15px;cursor:pointer}
+  .lenswitch button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .lenswitch button:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:26px;margin-top:20px}
+  @media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+  .stage{position:relative;background:var(--paper);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+  .stage svg{display:block;width:100%;height:auto}
+  .hint{position:absolute;left:16px;bottom:12px;font-size:12px;color:var(--ink-faint)}
+
+  aside{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:14px;padding:15px 15px 17px}
+  .card h2{font-size:12.5px;font-weight:800;letter-spacing:.01em;color:var(--ink-soft);margin:0 0 11px}
+  .kicker{font-size:11.5px;color:var(--ink-faint);margin:0 0 9px}
+
+  .toggles{display:flex;flex-direction:column;gap:5px}
+  .tgl{display:flex;align-items:flex-start;gap:9px;cursor:pointer;padding:7px 8px;border-radius:9px;border:1px solid transparent}
+  .tgl:hover{background:#fff;border-color:var(--hair)}
+  .tgl.disabled{opacity:.4;cursor:not-allowed}
+  .tgl input{appearance:none;width:16px;height:16px;border-radius:5px;border:1.5px solid var(--hair-strong);
+    display:grid;place-content:center;flex:none;cursor:pointer;background:#fff;margin-top:1px;transition:.12s}
+  .tgl input:checked{background:var(--c,var(--ink));border-color:var(--c,var(--ink))}
+  .tgl input:checked::after{content:"";width:8px;height:8px;border-radius:2px;background:#fff}
+  .tgl input:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+  .tgl .lab{font-size:13px;font-weight:600}
+  .tgl .desc{font-size:11px;color:var(--ink-faint);display:block;font-weight:400;margin-top:1px;line-height:1.35}
+  .swatch{width:9px;height:9px;border-radius:50%;flex:none;background:var(--c);margin-top:4px}
+
+  .sublogic{margin:9px 0 0;padding:11px 0 2px;border-top:1px dashed var(--hair-strong)}
+  .sublogic.off{opacity:.4;pointer-events:none}
+
+  .pair{display:block;width:100%;text-align:left;appearance:none;border:1px solid var(--hair);background:#fff;
+    border-radius:11px;padding:10px 11px;cursor:pointer;font:inherit;margin-bottom:8px;transition:.12s}
+  .pair:hover{border-color:var(--hair-strong);transform:translateY(-1px)}
+  .pair:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+  .pair[aria-current="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .pair .names{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .pair .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .pair .why{font-size:11.5px;color:var(--ink-soft);margin-top:4px;line-height:1.4}
+  .score-chip{margin-left:auto;font-size:11px;font-weight:800;color:var(--signal-ink);
+    background:#fff4e6;border:1px solid #fbe0bf;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .rank{font-size:11px;color:var(--ink-faint);font-weight:800;margin-right:1px}
+
+  #detail .empty,.empty{font-size:12.5px;color:var(--ink-faint)}
+  .node-title{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;margin:0 0 2px}
+  .node-title .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  .meta{font-size:12px;color:var(--ink-soft);margin:0 0 9px}
+  .desc-line{font-size:12.5px;color:var(--ink);margin:0 0 12px;line-height:1.45}
+  .mini{font-size:11px;color:var(--ink-faint);font-weight:800;margin:0 0 6px;letter-spacing:.01em}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 13px}
+  .chip{font-size:11px;font-weight:600;border:1px solid var(--hair-strong);background:#fff;border-radius:999px;
+    padding:2px 9px;color:var(--ink-soft);cursor:pointer}
+  .chip:hover{border-color:var(--ink)}
+  .role-tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin-bottom:12px}
+  .bars{display:flex;flex-direction:column;gap:7px;margin-bottom:11px}
+  .bar-row{display:grid;grid-template-columns:110px 1fr 46px;align-items:center;gap:8px;font-size:11.5px}
+  .bar-track{height:7px;border-radius:4px;background:#efece5;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px}
+  .bar-val{font-size:11px;color:var(--ink-faint);text-align:right;font-weight:700;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+  .stp{appearance:none;border:1px solid var(--hair-strong);background:#fff;width:17px;height:17px;border-radius:5px;
+    font:inherit;font-size:12px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:0}
+  .stp:hover{border-color:var(--ink);color:var(--ink)}
+  .verdict{font-size:12px;color:var(--ink);background:#fff;border:1px solid var(--hair);
+    border-left:3px solid var(--signal);border-radius:8px;padding:9px 11px;line-height:1.45}
+  .coup-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .coup-list button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:flex-start;font-size:12px;
+    padding:6px 7px;border-radius:8px;border:1px solid transparent}
+  .coup-list button:hover{background:#fff;border-color:var(--hair)}
+  .coup-list .ct{font-weight:700}.coup-list .cd{color:var(--ink-faint)}
+
+  /* coverage */
+  .cov-row{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:7px 0;border-top:1px solid var(--hair)}
+  .cov-row:first-of-type{border-top:0}
+  .cov-name{font-size:12px;font-weight:700}
+  .cov-sub{font-size:10.5px;color:var(--ink-faint);font-weight:500}
+  .cov-metrics{display:flex;align-items:center;gap:8px}
+  .heat{width:56px;height:7px;border-radius:4px;background:#efece5;overflow:hidden}
+  .heat i{display:block;height:100%;background:var(--founder);border-radius:4px}
+  .supply-dots{display:flex;gap:3px}
+  .supply-dots span{width:7px;height:7px;border-radius:50%;background:var(--ink);opacity:.8}
+  .supply-dots span.empty{background:transparent;border:1px solid var(--hair-strong)}
+  .flag{font-size:10px;font-weight:800;color:#fff;background:var(--signal);border-radius:5px;padding:1px 6px}
+  .flag.gap{background:#c0392b}.flag.bet{background:#7C4DD6}
+
+  /* matrix + grid */
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+  @media(max-width:960px){.board{grid-template-columns:1fr}}
+  .panel{background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:16px 18px 20px}
+  .panel h2{font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:0}
+  .panel p.lead{margin:4px 0 10px;font-size:12.5px;color:var(--ink-soft);max-width:60ch}
+  .mx-scroll{overflow-x:auto}
+  .legend{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-faint);flex-wrap:wrap}
+  .legend .ramp{width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,#f3efe8,var(--signal))}
+  .legend .key{display:inline-flex;align-items:center;gap:4px;margin-left:4px}
+  .legend .key i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  .note{font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:1.55}
+  .note b{color:var(--ink-soft);font-weight:700}
+
+  text{font-family:inherit}
+  .n-label{font-size:12px;font-weight:600;fill:var(--ink)}
+  .n-sub{font-size:10px;fill:var(--ink-faint)}
+  .axis-lab{font-size:12px;font-weight:600;fill:var(--ink-soft)}
+  .q-lab{font-size:11px;font-weight:700;fill:var(--ink-soft)}
+  .row-lab{font-size:12px;font-weight:700;fill:var(--ink-soft)}
+  .ctx-lab{font-size:10.5px;font-weight:600;fill:var(--ink-faint)}
+  .age-tick{font-size:10px;fill:var(--ink-faint)}
+  .stage-lab{font-size:11px;font-weight:600}
+  .ll-lab{font-size:10.5px;font-weight:600;fill:var(--signal-ink)}
+
+  .node-hit{cursor:pointer}
+  .node-dot{transition:transform .15s}
+  .node-hit:hover .node-dot{transform:scale(1.12)}
+  .node-g{transition:transform .55s cubic-bezier(.4,0,.15,1)}
+  .link{fill:none;stroke:var(--signal);transition:opacity .3s,stroke-width .3s}
+  .dimmed{opacity:.3}
+  @media(prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 40 20" aria-hidden="true"><path d="M2 18 A 18 18 0 0 1 38 18" fill="none" stroke="var(--signal)" stroke-width="4" stroke-linecap="round"/></svg>
+        <h1>Decision surface</h1>
+      </div>
+      <p class="sub">Supply (12 venture pieces) over demand (your 49 clusters, coalesced to 8 themes) over the value chain. One quiet base; every overlay is opt-in. Switch lenses to re-see the same pieces; switch layers to add meaning.</p>
+    </div>
+    <div class="lenswitch" role="group" aria-label="Lens">
+      <button id="lensArc" aria-pressed="true">Lifespan arc</button>
+      <button id="lensQuad" aria-pressed="false">Buyer quadrant</button>
+      <button id="lensChain" aria-pressed="false">Value chain</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="stage" aria-label="Venture map">
+      <svg id="canvas" viewBox="0 0 1000 620" role="img" aria-label="Venture pieces placed on the current lens"></svg>
+      <div class="hint" id="canvasHint">Click a piece to see what it couples with</div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <h2>Layers</h2>
+        <p class="kicker">Each adds one dimension. Default view is deliberately bare.</p>
+        <div class="toggles" id="layerToggles"></div>
+        <div class="sublogic" id="logicWrap">
+          <p class="mini" style="margin-bottom:8px">Count a coupling only if it earns its place</p>
+          <div class="toggles" id="logicToggles"></div>
+        </div>
+      </div>
+
+      <div class="card" id="shortCard">
+        <h2>Tandem shortlist</h2>
+        <p class="kicker">Pairs only viable together, by the couplings you’ve switched on.</p>
+        <div id="shortlist"></div>
+      </div>
+
+      <div class="card" id="coverageCard" style="display:none">
+        <h2>Demand vs. supply</h2>
+        <p class="kicker">Heat = Founder-conviction clusters. Dots = venture pieces covering it. Flags mark the mismatches.</p>
+        <div id="coverage"></div>
+      </div>
+
+      <div class="card" id="detail">
+        <h2 id="detailHead">Selection</h2>
+        <div id="detailBody"><p class="empty">Nothing selected. Click a piece on the map, a shortlist row, or a cell in the matrix / demand grid below.</p></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="board">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div><h2>Every pair, scored</h2><p class="lead">Each cell sums the couplings you’ve switched on. Turn on <b>Edit scores</b> to argue with them — changes recompute the shortlist and links.</p></div>
+        <div class="legend">weak<span class="ramp"></span>strong</div>
+      </div>
+      <div class="mx-scroll"><svg id="matrix" role="img" aria-label="Coupling matrix"></svg></div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div><h2>Your 49 clusters → 8 themes</h2><p class="lead">Rows A–F are life-stage bands; columns are the eight need-themes. Colour is your own status. Click any cell for the original cluster.</p></div>
+        <div class="legend">
+          <span class="key"><i style="background:var(--founder)"></i>Founder</span>
+          <span class="key"><i style="background:var(--observed)"></i>Observed</span>
+          <span class="key"><i style="background:var(--mentor)"></i>Mentor</span>
+        </div>
+      </div>
+      <div class="mx-scroll"><svg id="demandGrid" role="img" aria-label="Demand grid of 49 clusters across 8 themes"></svg></div>
+    </div>
+  </div>
+
+  <p class="note" id="footNote"></p>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const STOPS=[[0,'#16C2B3'],[12,'#3B82E0'],[20,'#4FB63C'],[32,'#AEBE1C'],[44,'#F7941E'],[54,'#EA3B2E'],[66,'#EC4899'],[82,'#7C4DD6'],[95,'#5A2E9E']];
+function lerp(a,b,t){return a+(b-a)*t}
+function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function rgb2hex(r){return '#'+r.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('')}
+function ageColor(age){age=Math.max(0,Math.min(95,age));
+  for(let i=0;i<STOPS.length-1;i++){const [a0,c0]=STOPS[i],[a1,c1]=STOPS[i+1];
+    if(age<=a1){const t=(age-a0)/(a1-a0),A=hex2rgb(c0),B=hex2rgb(c1);return rgb2hex([lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)]);}}
+  return STOPS[STOPS.length-1][1];}
+function mix(c0,c1,t){const A=hex2rgb(c0),B=hex2rgb(c1);return rgb2hex([lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)])}
+
+const CHAIN={Channel:'Channel / discovery',Enabler:'Service enabler',Enhancer:'Service enhancer',Payer:'Payer-facing',Receiver:'Receiver-facing'};
+const CHAIN_COLOR={Channel:'#3B82E0',Enabler:'#F7941E',Enhancer:'#7C4DD6',Payer:'#EA3B2E',Receiver:'#4FB63C'};
+
+const NODES=[
+ {id:1,short:'Discharge trigger',name:'Discharge trigger & care navigation',cluster:'Activation',age:68,fin:70,pres:80,
+  role:'Channel',themes:[2,8,4],what:'Detects the hospital-discharge moment, builds the plan, routes the family into fulfilment.',
+  winNote:'Fires at crisis onset — the moment the adult child is most ready to act.'},
+ {id:2,short:'Clinical continuum',name:'NRI clinical continuum (subscription)',cluster:'Clinical home care',age:72,fin:85,pres:85,
+  role:'Payer',themes:[2,1,4,7],what:'Ongoing subscription geriatric care managed for a distant adult child. The monetisation engine.',
+  winNote:'Serves the high-pay / can’t-be-present buyer — the top-right quadrant.'},
+ {id:3,short:'Home care ops',name:'Home-care & attendant operations',cluster:'Human care',age:74,fin:55,pres:78,
+  role:'Enabler',themes:[2,3,7],what:'Attendants and home nursing. Labour-intensive, entirely workforce-dependent.',
+  winNote:'The hands at the bedside; demand peaks where the family can’t be.'},
+ {id:4,short:'Tele-physio',name:'Tele-physiotherapy',cluster:'Clinical',age:64,fin:42,pres:50,
+  role:'Enhancer',themes:[4],what:'Remote preventive and rehab physio. A point service, best as a wedge inside a stack.',
+  winNote:'Weak couplings alone — reads as a recurring add-on, not a company.'},
+ {id:5,short:'Facility audit',name:'Facility audit & stay-booking',cluster:'Senior living',age:78,fin:80,pres:88,
+  role:'Channel',themes:[2,7,8],what:'Independently vets and books senior-living and respite stays for families who can’t visit.',
+  winNote:'A pure trust product for the distant buyer.'},
+ {id:6,short:'Assisted living',name:'Assisted living (asset-light, Tier-2 S.)',cluster:'Senior living',age:82,fin:82,pres:45,
+  role:'Payer',themes:[3,8],what:'Residential care, asset-light model in southern Tier-2 towns.',
+  winNote:'Later arc; higher capital intensity even when asset-light.'},
+ {id:7,short:'Age-proofing',name:'Home age-proofing',cluster:'Home & environment',age:58,fin:65,pres:40,
+  role:'Enhancer',themes:[3,4],what:'Preventive home modification — the fall you design out before it happens.',
+  winNote:'Preparatory; sells far more easily attached to a trigger than cold.'},
+ {id:8,short:'Planning & advisory',name:'Planning & advisory',cluster:'Planning / advisory',age:55,fin:72,pres:35,
+  role:'Payer',themes:[1,2,5],what:'Financial, legal, care and estate planning. Low-frequency, trust-gated — and it reaches past death.',
+  winNote:'Spans prep (mid arc) and estate (post-death) — the continuation node.'},
+ {id:9,short:'Trust / certification',name:'Workforce trust & certification layer',cluster:'Cross-cutting',age:48,spans:true,fin:50,pres:60,
+  role:'Enabler',themes:[7,2],what:'Vets, trains and certifies the workforce. Capital-light infrastructure — your own “Service Enabler” box.',
+  winNote:'Cross-cutting. The input the whole active window shares.'},
+ {id:10,short:'Ageing content',name:'Relationship-to-ageing content',cluster:'Top-of-funnel',age:22,fin:20,pres:20,
+  role:'Channel',themes:[5,6,1],what:'The design-research arm — the cards and lifespan material. Reaches families decades before the trigger.',
+  winNote:'Early arc, pre-monetisation. Demand generation, not a sale.'},
+ {id:11,short:'Adaptive clothing',name:'Adaptive clothing',cluster:'Lifestyle',age:76,fin:38,pres:30,
+  role:'Receiver',themes:[3,6],what:'A standalone adaptive-apparel product.',
+  winNote:'Peripheral on every coupling logic — a product, not a wedge.'},
+ {id:12,short:'Engagement',name:'Lifestyle & engagement',cluster:'Lifestyle',age:70,fin:50,pres:40,
+  role:'Receiver',themes:[5,6],what:'Community and loneliness programming.',
+  winNote:'Best value is a retention layer, not a front door.'}
+];
+const byId=Object.fromEntries(NODES.map(n=>[n.id,n]));
+
+const THEMES=[
+ {id:1,name:'Funding & affordability',short:'Funding'},
+ {id:2,name:'Coordination & trusted oversight',short:'Coordination'},
+ {id:3,name:'Ageing-at-home & autonomy',short:'Ageing-at-home'},
+ {id:4,name:'Mobility & functional prevention',short:'Mobility'},
+ {id:5,name:'Emotional & psychological wellbeing',short:'Emotional'},
+ {id:6,name:'Purpose, identity & contribution',short:'Purpose'},
+ {id:7,name:'Provider standards, records & interop',short:'Standards/data'},
+ {id:8,name:'Institutional channels',short:'Institutional'}
+];
+const themeById=Object.fromEntries(THEMES.map(t=>[t.id,t]));
+
+const BANDS=[
+ {b:'A',age:32,lab:'Planning adults'},{b:'B',age:45,lab:'Mid-career payers'},
+ {b:'C',age:55,lab:'Dual-gen funders'},{b:'D',age:64,lab:'Young-old 60–69'},
+ {b:'E',age:74,lab:'Rising-need 70–79'},{b:'F',age:84,lab:'High-acuity / frail'}];
+const bandAge=Object.fromEntries(BANDS.map(x=>[x.b,x.age]));
+
+// 49 clusters (B2b = the duplicate B2)
+const CLUSTERS=[
+ ['A1','A',1,'Young professionals planning for parents & self','Fund future care early','Mentor'],
+ ['A2','A',2,'Outstation adult children','Know parents are okay without constant checking','Founder'],
+ ['A3','A',3,'Early-career migrants with ageing parents','Support parents while preserving independence','Founder'],
+ ['A4','A',4,'Children noticing early mobility decline','Act before falls or loss of function','Founder'],
+ ['A5','A',5,'Children carrying guilt / worry','Discuss ageing honestly','Mentor'],
+ ['A6','A',6,'Younger elders-to-be','Plan later life as contribution, not withdrawal','Founder'],
+ ['A7','A',7,'Digitally comfortable family coordinators','Compare and combine reliable providers','Mentor'],
+ ['A8','A',8,'Employees beginning parent-care roles','Get help without hiding family obligations','Mentor'],
+ ['B1','B',1,'Adult-child payers balancing duty & career','Pay for care while preserving career mobility','Observed'],
+ ['B2','B',2,'NRI / outstation adult-child payers','Verify care and handle exceptions','Founder'],
+ ['B2b','B',2,'Local primary family coordinators','Share invisible work with siblings / spouse','Founder'],
+ ['B3','B',3,'Parents of mid-career payers who prefer home','Accept help without losing control','Mentor'],
+ ['B4','B',4,'Families managing early arthritis / recovery','Prevent avoidable loss of function','Mentor'],
+ ['B5','B',5,'Sandwich-generation caregivers','Reduce guilt and overload','Mentor'],
+ ['B6','B',6,'Mid-career payers seeking a positive elder future','Support interests and contribution, not only safety','Founder'],
+ ['B7','B',7,'Family payers coordinating many providers','Know who is qualified and accountable','Mentor'],
+ ['B8','B',8,'Employers of mid-career caregivers','Reduce disruption from parent-care crises','Mentor'],
+ ['C1','C',1,'Adults funding frail parents & own ageing','Allocate money across two generations','Mentor'],
+ ['C2','C',2,'Primary family caregiver nearing burnout','Coordinate family and workers reliably','Founder'],
+ ['C3','C',3,'Adults planning to age at home','Prepare home and support before dependence','Founder'],
+ ['C4','C',4,'Adults with emerging mobility risk','Preserve strength before later frailty','Founder'],
+ ['C5','C',5,'Adults processing parents’ decline & own ageing','Prepare emotionally for role change','Mentor'],
+ ['C6','C',6,'Experienced professionals approaching retirement','Plan continued contribution and identity','Mentor'],
+ ['C7','C',7,'Families managing higher-acuity parent care','Move between hospital, pharmacy, home, rehab','Mentor'],
+ ['C8','C',8,'Employers / insurers supporting late-career staff','Cover parent care & retirement transition','Mentor'],
+ ['D1','D',1,'Independent 60–69-year-olds','Plan sustainable spending and care choices','Mentor'],
+ ['D2','D',2,'Independent elders & nearby family','Know who coordinates if needs change','Founder'],
+ ['D3','D',3,'Older adults determined to remain at home','Keep agency over routines and helpers','Observed'],
+ ['D4','D',4,'Active older adults at mobility risk','Stay strong and avoid wheelchair dependence','Mentor'],
+ ['D5','D',5,'Older adults vulnerable to loneliness','Maintain meaningful human contact','Mentor'],
+ ['D6','D',6,'Retired / semi-retired skilled adults','Remain contributing members of society','Observed'],
+ ['D7','D',7,'Older adults navigating many services','Avoid repeating history and losing consent','Mentor'],
+ ['D8','D',8,'Retirees leaving employer benefits','Avoid a support / coverage cliff','Founder'],
+ ['E1','E',1,'70–79s and family payers','Understand recurring care costs','Founder'],
+ ['E2','E',2,'Elders with rising daily support needs','Reliable help without family managing each task','Founder'],
+ ['E3','E',3,'Older adults rejecting curated facilities','Age at home without isolation or over-curation','Observed'],
+ ['E4','E',4,'Elders with arthritis / weakness / fall risk','Maintain function and recover safely','Founder'],
+ ['E5','E',5,'Isolated elders and families','Build trusted relationships beyond tasks','Observed'],
+ ['E6','E',6,'Older adults willing to contribute','Use skills and interests in real roles','Observed'],
+ ['E7','E',7,'Care managers, clinicians and workers','Coordinate plans, changes and red flags','Mentor'],
+ ['E8','E',8,'Hospitals, RWAs and insurers','Connect people to trusted support','Founder'],
+ ['F1','F',1,'Families funding high-support care','Know total cost, trade-offs and payer roles','Founder'],
+ ['F2','F',2,'High-acuity elders, spouses & adult children','Keep daily care reliable','Founder'],
+ ['F3','F',3,'Frail elders wanting home & dignity','Intimate support while retaining voice','Founder'],
+ ['F4','F',4,'Bedbound / post-stroke elders','Prevent complications, preserve function','Founder'],
+ ['F5','F',5,'Frail elders, spouse caregivers & families','Address isolation, fear and distress','Mentor'],
+ ['F6','F',6,'High-support elders with retained expertise','Preserve identity and participation','Founder'],
+ ['F7','F',7,'Workers, care managers, clinicians, pharmacies','Coordinate complex care safely','Mentor'],
+ ['F8','F',8,'Discharge desks, insurers and RWAs','Bridge high-risk transitions home','Founder']
+].map(r=>({coord:r[0],band:r[1],theme:r[2],persona:r[3],need:r[4],status:r[5]}));
+
+const STATUS_COLOR={Founder:'var(--founder)',Observed:'var(--observed)',Mentor:'var(--mentor)'};
+const STATUS_HEX={Founder:'#F7941E',Observed:'#3FA845',Mentor:'#b4ac9f'};
+
+// theme analytics
+const themeStats={};
+THEMES.forEach(t=>{
+  const cl=CLUSTERS.filter(c=>c.theme===t.id);
+  const founder=cl.filter(c=>c.status==='Founder').length;
+  const observed=cl.filter(c=>c.status==='Observed').length;
+  const supply=NODES.filter(n=>n.themes.includes(t.id));
+  themeStats[t.id]={clusters:cl,founder,observed,total:cl.length,supply,coverage:supply.length};
+});
+
+/* coupling logics + pairs */
+const LOGICS=[
+ {key:'c1',i:0,lab:'Trigger → fulfilment',color:'#EA3B2E',desc:'One creates the activation moment; the other monetises it.'},
+ {key:'c2',i:1,lab:'Trust → margin',color:'#7C4DD6',desc:'A trust-builder unlocks a high-margin sale that can’t be sold cold.'},
+ {key:'c3',i:2,lab:'Shared supply',color:'#3B82E0',desc:'They share a scarce asset — build one, build the other’s input.'},
+ {key:'c4',i:3,lab:'Anti-churn',color:'#4FB63C',desc:'Pairing survives the death node and extends across the arc.'}
+];
+const LKEYS=LOGICS.map(l=>l.key);
+const PAIRS0={
+ '1-2':[3,1,2,1,'Discharge is the activation moment; the subscription continuum is what’s sold into it. The trigger carries no margin alone, and the continuum is cold-start without it. The NRI thesis, structurally.'],
+ '1-3':[3,1,2,1,'Discharge routes straight into home-care fulfilment — the cleanest trigger→delivery handoff in the set.'],
+ '1-4':[2,0,1,0,'Post-discharge rehab is the low-friction way into physio.'],
+ '1-7':[2,0,0,1,'A fall or discharge is the moment age-proofing finally becomes an easy sell.'],
+ '1-10':[2,0,0,1,'Early-arc content keeps you in the family’s head, so you’re the incumbent at discharge, not a cold vendor.'],
+ '2-3':[1,1,3,1,'Both run on the same care-manager and vetted-attendant layer — build one and most of the other’s supply exists.'],
+ '2-4':[1,0,2,2,'Physio becomes a recurring wedge inside the subscription; recurring touchpoints lift retention.'],
+ '2-5':[1,1,2,2,'Same distant buyer, same care manager; placement extends the relationship into later life.'],
+ '2-8':[0,1,1,3,'Advisory and estate work is the continuation past the recipient’s death — the main bridge over the churn cliff.'],
+ '2-9':[0,3,3,0,'The certified workforce is both the trust signal that unlocks the premium clinical sale and its literal supply.'],
+ '2-10':[2,1,0,1,'Content is top-of-funnel for the paid continuum — it converts early attention into trigger-moment preference.'],
+ '2-12':[0,0,1,2,'Engagement programming is a retention layer that makes the subscription stickier.'],
+ '3-4':[1,0,2,0,'Shared field workforce; physio bolts onto existing home-care visits.'],
+ '3-9':[0,3,3,0,'The certified caregiver pool is home care’s supply — and the trust that lets a stranger into the home.'],
+ '3-11':[0,0,1,0,'Minor supply overlap via field staff.'],
+ '4-9':[0,1,1,0,'Certification underwrites the credibility of remote clinicians.'],
+ '5-6':[1,0,2,1,'Booking funnels demand into residential supply.'],
+ '5-9':[0,3,1,0,'Audit/booking is fundamentally a trust product; the certification layer is its backbone.'],
+ '6-9':[0,2,1,0,'Certification underwrites the facility quality claims that justify the price.'],
+ '6-12':[0,0,1,1,'Engagement programming is part of what a residence sells; shared delivery.'],
+ '7-8':[1,0,0,1,'Planning surfaces the home-modification need before a crisis forces it.'],
+ '8-10':[2,1,0,0,'Content educates families into planning demand upstream.'],
+ '9-12':[0,1,0,0,'Certification can extend to engagement staff — light.']
+};
+const PAIRS=JSON.parse(JSON.stringify(PAIRS0));
+function pairKey(a,b){return a<b?a+'-'+b:b+'-'+a}
+function pairData(a,b){return PAIRS[pairKey(a,b)]||null}
+const enabled={c1:true,c2:true,c3:true,c4:true};
+function pairScore(a,b){const p=pairData(a,b);if(!p)return 0;let s=0;LKEYS.forEach((k,i)=>{if(enabled[k])s+=p[i]});return s}
+function pairMaxEnabled(){let m=0;LKEYS.forEach(k=>{if(enabled[k])m+=3});return m||1}
+
+/* layer state */
+const layer={demand:false,couplings:true,willingness:false,linked:false,edit:false};
+
+/* ============ GEOMETRY ============ */
+const SVGNS='http://www.w3.org/2000/svg';
+const canvas=document.getElementById('canvas');
+const W=1000,H=620, cx=500,cy=512,R=392, ageMin=0,ageMax=95;
+function ageAngle(age){return Math.PI*(1-(age-ageMin)/(ageMax-ageMin))}
+function arcPoint(age,rad){const a=ageAngle(age);return [cx+rad*Math.cos(a),cy-rad*Math.sin(a)]}
+const NODE_RADIUS={10:300,9:362,8:330,7:298,4:360,1:328,12:296,2:262,3:228,11:196,5:332,6:258};
+const QX0=250,QX1=820,QY0=120,QY1=470;
+function quadPoint(n){return [QX0+(n.fin/100)*(QX1-QX0), QY1-(n.pres/100)*(QY1-QY0)]}
+const CHAIN_ROWS=['Channel','Enabler','Enhancer','Payer','Receiver'];
+const CHAIN_Y={Channel:170,Enabler:258,Enhancer:346,Payer:434,Receiver:520};
+function chainPoint(n){const x=255+((n.age-30)/(85-30))*600;return [Math.max(255,Math.min(880,x)),CHAIN_Y[n.role]]}
+
+let LENS='arc', selNode=null, selPair=null, selTheme=null;
+
+function el(t,a){const e=document.createElementNS(SVGNS,t);for(const k in a)e.setAttribute(k,a[k]);return e}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+let gAxes,gArcBg,gQuad,gChain,gOverlay,gLinks,gNodes;
+function initCanvas(){
+  clear(canvas);
+  gAxes=el('g',{});canvas.appendChild(gAxes);
+  gArcBg=el('g',{});canvas.appendChild(gArcBg);
+  gQuad=el('g',{opacity:0});canvas.appendChild(gQuad);
+  gChain=el('g',{opacity:0});canvas.appendChild(gChain);
+  gOverlay=el('g',{});canvas.appendChild(gOverlay);
+  gLinks=el('g',{});canvas.appendChild(gLinks);
+  gNodes=el('g',{});canvas.appendChild(gNodes);
+  drawArcBg();drawQuadBg();drawChainBg();buildNodes();layout();
+}
+function describeArc(a0,a1,rad){const [x0,y0]=arcPoint(a0,rad),[x1,y1]=arcPoint(a1,rad);return `M ${x0} ${y0} A ${rad} ${rad} 0 0 1 ${x1} ${y1}`}
+function drawArcBg(){
+  const seg=46;
+  for(let i=0;i<seg;i++){const a0=ageMin+(ageMax-ageMin)*i/seg,a1=ageMin+(ageMax-ageMin)*(i+1)/seg;
+    gArcBg.appendChild(el('path',{d:describeArc(a0,a1+0.3,R),stroke:ageColor((a0+a1)/2),'stroke-width':16,fill:'none',opacity:.92}));}
+  [10,20,30,40,50,60,70,80,90].forEach(age=>{const [xo,yo]=arcPoint(age,R+13);const t=el('text',{x:xo,y:yo,'text-anchor':'middle','dominant-baseline':'middle',class:'age-tick'});t.textContent=age;gArcBg.appendChild(t);});
+  const b=arcPoint(2,R+30);const tB=el('text',{x:b[0],y:b[1],'text-anchor':'start',class:'stage-lab',fill:'#16C2B3'});tB.textContent='birth';gArcBg.appendChild(tB);
+  const d=arcPoint(93,R+30);const tD=el('text',{x:d[0],y:d[1],'text-anchor':'end',class:'stage-lab',fill:'#5A2E9E'});tD.textContent='late life';gArcBg.appendChild(tD);
+  gArcBg.appendChild(el('path',{d:describeArc(52,90,R+42),stroke:'var(--ink-faint)','stroke-width':1,fill:'none','stroke-dasharray':'3 3'}));
+  const m=arcPoint(71,R+62);const am=el('text',{x:m[0],y:m[1],'text-anchor':'middle',class:'n-sub'});am.textContent='venture-active window';gArcBg.appendChild(am);
+}
+function drawQuadBg(){
+  gQuad.appendChild(el('line',{x1:QX0,y1:QY1,x2:QX1,y2:QY1,stroke:'var(--hair-strong)','stroke-width':1.5}));
+  gQuad.appendChild(el('line',{x1:QX0,y1:QY0,x2:QX0,y2:QY1,stroke:'var(--hair-strong)','stroke-width':1.5}));
+  const mx=(QX0+QX1)/2,my=(QY0+QY1)/2;
+  gQuad.appendChild(el('line',{x1:mx,y1:QY0,x2:mx,y2:QY1,stroke:'var(--hair)','stroke-width':1,'stroke-dasharray':'4 4'}));
+  gQuad.appendChild(el('line',{x1:QX0,y1:my,x2:QX1,y2:my,stroke:'var(--hair)','stroke-width':1,'stroke-dasharray':'4 4'}));
+  gQuad.appendChild(el('rect',{x:mx,y:QY0,width:QX1-mx,height:my-QY0,fill:'#fff4e6',opacity:.7}));
+  const xl=el('text',{x:mx,y:QY1+40,'text-anchor':'middle',class:'axis-lab'});xl.textContent='Financial capacity  (earning − liabilities)  →';gQuad.appendChild(xl);
+  const yl=el('text',{x:QX0-18,y:my,'text-anchor':'middle',class:'axis-lab',transform:`rotate(-90 ${QX0-18} ${my})`});yl.textContent='Presence deficit  (distance + inflexibility)  →';gQuad.appendChild(yl);
+  const corners=[[QX1-6,QY0+16,'end','pays, can’t be there — the buyer','var(--signal-ink)'],[QX0+6,QY1-8,'start','does it themselves','var(--ink-soft)'],[QX0+6,QY0+16,'start','can’t pay, can’t be there — underserved','var(--ink-soft)'],[QX1-6,QY1-8,'end','pays & stays involved','var(--ink-soft)']];
+  corners.forEach(c=>{const t=el('text',{x:c[0],y:c[1],'text-anchor':c[2],class:'q-lab',fill:c[4]});t.textContent=c[3];gQuad.appendChild(t);});
+}
+function drawChainBg(){
+  // context strip: investors + aggregators (non-node ecosystem)
+  const ctx=[['Investors  ·  Family Foundations · CSRs · PEs',70],['Aggregators / Channels  ·  Real-estate & hospital chains',112]];
+  ctx.forEach(c=>{gChain.appendChild(el('rect',{x:250,y:c[1]-16,width:630,height:26,rx:7,fill:'#f4f1ea',stroke:'var(--hair)'}));
+    const t=el('text',{x:565,y:c[1]+1,'text-anchor':'middle','dominant-baseline':'middle',class:'ctx-lab'});t.textContent=c[0];gChain.appendChild(t);});
+  CHAIN_ROWS.forEach(r=>{const y=CHAIN_Y[r];
+    gChain.appendChild(el('line',{x1:250,y1:y,x2:880,y2:y,stroke:'var(--hair)','stroke-width':1,'stroke-dasharray':'2 5'}));
+    const t=el('text',{x:240,y:y,'text-anchor':'end','dominant-baseline':'middle',class:'row-lab',fill:CHAIN_COLOR[r]});t.textContent=CHAIN[r];gChain.appendChild(t);});
+  const cap=el('text',{x:565,y:575,'text-anchor':'middle',class:'n-sub'});cap.textContent='left → right: earlier in the life course';gChain.appendChild(cap);
+}
+
+/* nodes */
+const nodeEls={};
+function buildNodes(){
+  NODES.forEach(n=>{
+    const g=el('g',{class:'node-g node-hit',tabindex:0,role:'button','aria-label':n.name});
+    const leader=el('line',{class:'node-leader',stroke:'var(--hair-strong)','stroke-width':1});g.appendChild(leader);
+    const ring=el('circle',{r:n.spans?16:13,fill:'#fff',stroke:ageColor(n.age),'stroke-width':n.spans?3:2.5,class:'node-dot'});
+    if(n.spans)ring.setAttribute('stroke-dasharray','3 3');
+    const dot=el('circle',{r:5,fill:ageColor(n.age),class:'node-dot'});
+    g.appendChild(ring);g.appendChild(dot);
+    const t=el('text',{class:'n-label'});t.textContent=n.short;g.appendChild(t);
+    g.addEventListener('click',e=>{e.stopPropagation();selectNode(n.id)});
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectNode(n.id)}});
+    gNodes.appendChild(g);nodeEls[n.id]={g,ring,dot,t,leader};
+  });
+}
+function deOverlap(items,gap,lo,hi){
+  items.sort((a,b)=>a.target-b.target);let prev=-1e9;
+  items.forEach(it=>{let p=Math.max(it.target,prev+gap);it.pos=p;prev=p;});
+  const over=items.length?items[items.length-1].pos-hi:0;if(over>0)items.forEach(it=>it.pos-=over);
+  if(items.length&&items[0].pos<lo){const d=lo-items[0].pos;items.forEach(it=>it.pos+=d);}
+}
+function computeLabels(){
+  const groups={};
+  const push=(k,n,axisTarget)=>{(groups[k]=groups[k]||[]).push({n,target:axisTarget})};
+  NODES.forEach(n=>{const e=nodeEls[n.id];
+    if(LENS==='arc'){ if(n.age>=45)push('col',n,e._y); else push('free',n,e._y); }
+    else if(LENS==='quad'){ e._x>(QX0+QX1)/2?push('qR',n,e._y):push('qL',n,e._y); }
+    else { push('ch_'+n.role,n,e._x); }
+  });
+  const writeY=(arr,gx,anchor)=>arr.forEach(it=>{const e=nodeEls[it.n.id];const lx=gx-e._x,ly=it.pos-e._y;
+    e.t.setAttribute('x',lx);e.t.setAttribute('y',ly+4);e.t.setAttribute('text-anchor',anchor);
+    const endx=lx+(anchor==='start'?-6:6);const rr=it.n.spans?16:13;const dist=Math.hypot(endx,ly)||1;
+    e.leader.setAttribute('x1',(endx/dist)*rr);e.leader.setAttribute('y1',(ly/dist)*rr);e.leader.setAttribute('x2',endx);e.leader.setAttribute('y2',ly);
+    e.leader.style.opacity=(Math.abs(lx)>rr+8)?.85:0;});
+  if(LENS==='arc'){ if(groups.col){deOverlap(groups.col,21,120,560);writeY(groups.col,756,'start');}
+    if(groups.free)groups.free.forEach(it=>{const e=nodeEls[it.n.id];e.t.setAttribute('x',18);e.t.setAttribute('y',4);e.t.setAttribute('text-anchor','start');e.leader.style.opacity=0;}); }
+  else if(LENS==='quad'){ if(groups.qR){deOverlap(groups.qR,21,116,486);writeY(groups.qR,842,'start');}
+    if(groups.qL){deOverlap(groups.qL,21,116,486);writeY(groups.qL,208,'end');} }
+  else { // chain: horizontal de-overlap per row, labels below
+    CHAIN_ROWS.forEach(r=>{const arr=groups['ch_'+r];if(!arr)return;deOverlap(arr,122,270,865);
+      arr.forEach(it=>{const e=nodeEls[it.n.id];const lx=it.pos-e._x,ly=26;
+        e.t.setAttribute('x',lx);e.t.setAttribute('y',ly);e.t.setAttribute('text-anchor','middle');
+        e.leader.setAttribute('x1',0);e.leader.setAttribute('y1',13);e.leader.setAttribute('x2',lx);e.leader.setAttribute('y2',ly-10);
+        e.leader.style.opacity=Math.abs(lx)>6?.85:0;}); });
+  }
+}
+function layout(){
+  NODES.forEach(n=>{const e=nodeEls[n.id];let p;
+    if(LENS==='arc')p=arcPoint(n.age,NODE_RADIUS[n.id]);
+    else if(LENS==='quad')p=quadPoint(n);else p=chainPoint(n);
+    e._x=p[0];e._y=p[1];e.g.setAttribute('transform',`translate(${p[0]},${p[1]})`);});
+  computeLabels();
+  NODES.forEach(n=>{const e=nodeEls[n.id];let dim=false;
+    if(LENS==='arc'&&n.age<45)dim=true;
+    if(LENS==='quad'&&n.id===10)dim=true;
+    const active=(selNode===n.id)||(selPair&&selPair.includes(n.id))||(selTheme&&n.themes.includes(selTheme));
+    e.g.classList.toggle('dimmed',dim&&!active);});
+  drawOverlays();drawLinks();
+}
+
+/* overlays: willingness, linked-lives, demand-on-arc markers */
+function drawOverlays(){
+  clear(gOverlay);
+  if(LENS==='arc'&&layer.willingness) drawWillingness();
+  if(LENS==='arc'&&layer.linked) drawLinked();
+  if(layer.demand&&selTheme) highlightThemeOnMap(selTheme);
+}
+function drawWillingness(){
+  // receiver "agreeing capacity" by band — rises with acuity/necessity (a hypothesis, from the stakeholder model)
+  const pts=[[32,.30],[45,.34],[55,.42],[64,.50],[74,.70],[84,.86]];
+  let d='';const inner=[];
+  pts.forEach((p,i)=>{const [x,y]=arcPoint(p[0],R-10);const [xi,yi]=arcPoint(p[0],R-10-p[1]*120);
+    d+=(i?' L':'M')+` ${x} ${y}`;inner.push([xi,yi]);});
+  for(let i=inner.length-1;i>=0;i--)d+=` L ${inner[i][0]} ${inner[i][1]}`;
+  d+=' Z';
+  gOverlay.appendChild(el('path',{d,fill:'#4FB63C',opacity:.12}));
+  let dl='';inner.forEach((p,i)=>{dl+=(i?' L':'M')+` ${p[0]} ${p[1]}`;});
+  gOverlay.appendChild(el('path',{d:dl,fill:'none',stroke:'#3FA845','stroke-width':1.5,'stroke-dasharray':'4 3',opacity:.7}));
+  const lp=arcPoint(84,R-10-.86*120-14);const t=el('text',{x:lp[0],y:lp[1],'text-anchor':'middle',class:'ll-lab',fill:'#2f7d35'});t.textContent='receiver agreeing-capacity (rises with need)';gOverlay.appendChild(t);
+}
+function drawLinked(){
+  const roles=[[12,'the next buyer'],[42,'today’s buyer'],[72,'today’s recipient']];
+  const pos=roles.map(r=>arcPoint(r[0],R-150));
+  for(let i=0;i<pos.length-1;i++){
+    gOverlay.appendChild(el('path',{d:`M ${pos[i][0]} ${pos[i][1]} Q ${(pos[i][0]+pos[i+1][0])/2} ${Math.min(pos[i][1],pos[i+1][1])-40} ${pos[i+1][0]} ${pos[i+1][1]}`,fill:'none',stroke:'var(--signal)','stroke-width':1.6,'stroke-dasharray':'2 4',opacity:.8,'marker-end':'url(#arr)'}));
+  }
+  if(!document.getElementById('arr')){const defs=el('defs',{});const m=el('marker',{id:'arr',viewBox:'0 0 8 8',refX:6,refY:4,markerWidth:6,markerHeight:6,orient:'auto'});m.appendChild(el('path',{d:'M0 0 L8 4 L0 8 z',fill:'var(--signal)'}));defs.appendChild(m);gOverlay.appendChild(defs);}
+  roles.forEach((r,i)=>{gOverlay.appendChild(el('circle',{cx:pos[i][0],cy:pos[i][1],r:4,fill:'var(--signal)'}));
+    const t=el('text',{x:pos[i][0],y:pos[i][1]+16,'text-anchor':'middle',class:'ll-lab'});t.textContent=r[1];gOverlay.appendChild(t);});
+  const c=arcPoint(42,R-150+40);const cap=el('text',{x:c[0],y:c[1]+6,'text-anchor':'middle',class:'n-sub'});cap.textContent='one family, three positions — demand regenerates down the arc';gOverlay.appendChild(cap);
+}
+function highlightThemeOnMap(tid){
+  NODES.filter(n=>n.themes.includes(tid)).forEach(n=>{const e=nodeEls[n.id];
+    gOverlay.appendChild(el('circle',{cx:e._x,cy:e._y,r:(n.spans?22:19),fill:'none',stroke:'var(--signal)','stroke-width':2,opacity:.8}));});
+}
+
+/* links */
+function curve(x0,y0,x1,y1){const mx=(x0+x1)/2,my=(y0+y1)/2;const pull=LENS==='arc'?.22:0;
+  const cxp=mx+(cx-mx)*pull, cyp=my+(cy-my)*pull*.35+(LENS==='arc'?30:0);return `M ${x0} ${y0} Q ${cxp} ${cyp} ${x1} ${y1}`}
+function topPairs(k){const all=[];Object.keys(PAIRS).forEach(key=>{const [a,b]=key.split('-').map(Number);const s=pairScore(a,b);if(s>0)all.push({a,b,s});});
+  all.sort((x,y)=>y.s-x.s||(byId[x.a].age+byId[x.b].age)-(byId[y.a].age+byId[y.b].age));return all.slice(0,k)}
+function drawLinks(){
+  clear(gLinks);
+  if(!layer.couplings)return;
+  const maxS=pairMaxEnabled();let show=[];
+  if(selPair)show=[{a:selPair[0],b:selPair[1],s:pairScore(selPair[0],selPair[1])}];
+  else if(selNode)NODES.forEach(n=>{if(n.id===selNode)return;const s=pairScore(selNode,n.id);if(s>0)show.push({a:selNode,b:n.id,s});});
+  else show=topPairs(3).map(p=>({a:p.a,b:p.b,s:p.s}));
+  show.forEach(({a,b,s})=>{const ea=nodeEls[a],eb=nodeEls[b];const pd=pairData(a,b);let di=-1,dv=-1;
+    LKEYS.forEach((k,i)=>{if(enabled[k]&&pd[i]>dv){dv=pd[i];di=i;}});
+    const path=el('path',{class:'link',d:curve(ea._x,ea._y,eb._x,eb._y),'stroke-width':1+(s/maxS)*6,
+      opacity:selPair?.9:(selNode?.2+.6*(s/maxS):.18+.35*(s/maxS))});
+    if(di>=0)path.setAttribute('stroke',LOGICS[di].color);gLinks.appendChild(path);});
+}
+
+/* selection */
+function clearHi(){NODES.forEach(n=>{const e=nodeEls[n.id];e.ring.setAttribute('stroke-width',n.spans?3:2.5);e.t.setAttribute('font-weight','600');e.t.setAttribute('fill','var(--ink)');});}
+function selectNode(id){selNode=id;selPair=null;selTheme=null;clearHi();
+  const e=nodeEls[id];e.ring.setAttribute('stroke-width',4.5);e.t.setAttribute('font-weight','700');
+  NODES.forEach(n=>{if(n.id!==id)nodeEls[n.id].t.setAttribute('fill',(layer.couplings&&pairScore(id,n.id)>0)?'var(--ink)':'var(--ink-faint)');});
+  document.getElementById('canvasHint').textContent='Click empty space to reset';
+  layout();renderNodeDetail(id);renderShortlist();if(layer.demand)renderGrid();
+}
+function selectPair(a,b){selPair=[a,b];selNode=null;selTheme=null;clearHi();
+  [a,b].forEach(id=>{const e=nodeEls[id];e.ring.setAttribute('stroke-width',4.5);e.t.setAttribute('font-weight','700');});
+  NODES.forEach(n=>{if(n.id!==a&&n.id!==b)nodeEls[n.id].t.setAttribute('fill','var(--ink-faint)');});
+  layout();renderPairDetail(a,b);renderShortlist();}
+function selectTheme(tid){selTheme=tid;selNode=null;selPair=null;clearHi();
+  NODES.forEach(n=>{nodeEls[n.id].t.setAttribute('fill',n.themes.includes(tid)?'var(--ink)':'var(--ink-faint)');});
+  layout();renderThemeDetail(tid);renderGrid();}
+function selectCluster(coord){const c=CLUSTERS.find(x=>x.coord===coord);renderClusterDetail(c);
+  selTheme=c.theme;selNode=null;selPair=null;clearHi();NODES.forEach(n=>{nodeEls[n.id].t.setAttribute('fill',n.themes.includes(c.theme)?'var(--ink)':'var(--ink-faint)');});layout();renderGrid();}
+function resetSel(){selNode=null;selPair=null;selTheme=null;clearHi();NODES.forEach(n=>nodeEls[n.id].t.setAttribute('fill','var(--ink)'));
+  document.getElementById('canvasHint').textContent='Click a piece to see what it couples with';
+  layout();document.getElementById('detailHead').textContent='Selection';
+  document.getElementById('detailBody').innerHTML='<p class="empty">Nothing selected. Click a piece on the map, a shortlist row, or a cell in the matrix / demand grid below.</p>';
+  renderShortlist();if(layer.demand)renderGrid();}
+canvas.addEventListener('click',e=>{if(e.target===canvas)resetSel();});
+
+/* shortlist */
+function renderShortlist(){const host=document.getElementById('shortlist');host.innerHTML='';
+  if(!layer.couplings){host.innerHTML='<p class="empty">Turn on the Couplings layer to rank tandems.</p>';return;}
+  if(!LKEYS.some(k=>enabled[k])){host.innerHTML='<p class="empty">Switch on at least one coupling logic.</p>';return;}
+  topPairs(3).forEach((p,i)=>{const A=byId[p.a],B=byId[p.b];const btn=document.createElement('button');btn.className='pair';
+    btn.setAttribute('aria-current',(selPair&&selPair.includes(p.a)&&selPair.includes(p.b))?'true':'false');
+    btn.innerHTML=`<div class="names"><span class="rank">${i+1}</span>
+      <span class="dot" style="background:${ageColor(A.age)}"></span>${A.short}
+      <span style="color:var(--ink-faint);font-weight:700">+</span>
+      <span class="dot" style="background:${ageColor(B.age)}"></span>${B.short}
+      <span class="score-chip">${p.s}</span></div><div class="why">${pairData(p.a,p.b)[4]}</div>`;
+    btn.addEventListener('click',()=>selectPair(p.a,p.b));host.appendChild(btn);});}
+
+/* coverage */
+function renderCoverage(){const host=document.getElementById('coverage');host.innerHTML='';
+  const PERIPHERAL=[4,10,11,12];
+  const rows=THEMES.map(t=>{const st=themeStats[t.id];
+    const onlyWeak=st.supply.length>0&&st.supply.every(n=>PERIPHERAL.includes(n.id));
+    const gap=st.founder>=3&&(st.coverage<=2||onlyWeak);
+    const bet=st.founder===0&&st.coverage>=1&&st.clusters.every(c=>c.status==='Mentor');
+    return {t,st,gap,bet,rank:(gap?3:0)+(bet?2:0)+(st.founder>=5?1:0)};}).sort((a,b)=>b.rank-a.rank||b.st.founder-a.st.founder);
+  rows.forEach(({t,st,gap,bet})=>{const row=document.createElement('div');row.className='cov-row';
+    const dots=NODES.map(n=>`<span class="${n.themes.includes(t.id)?'':'empty'}"></span>`).slice(0,0);
+    let supplyDots='';for(let i=0;i<Math.max(st.coverage,1);i++)supplyDots+=`<span class="${i<st.coverage?'':'empty'}"></span>`;
+    row.innerHTML=`<div><div class="cov-name">${t.name}</div><div class="cov-sub">${st.founder}/${st.total} Founder-conviction · ${st.coverage} piece${st.coverage===1?'':'s'} covering</div></div>
+      <div class="cov-metrics"><span class="heat" title="founder conviction"><i style="width:${(st.founder/7)*100}%"></i></span>
+      <span class="supply-dots">${supplyDots}</span>
+      ${gap?'<span class="flag gap">gap</span>':''}${bet?'<span class="flag bet">bet</span>':''}</div>`;
+    row.style.cursor='pointer';row.addEventListener('click',()=>selectTheme(t.id));host.appendChild(row);});}
+
+/* detail panels */
+function renderNodeDetail(id){const n=byId[id];document.getElementById('detailHead').textContent='Piece';
+  const partners=NODES.filter(m=>m.id!==id&&pairScore(id,m.id)>0).map(m=>({m,s:pairScore(id,m.id)})).sort((a,b)=>b.s-a.s);
+  const role=n.role;
+  let html=`<div class="node-title"><span class="dot" style="background:${ageColor(n.age)}"></span>${n.name}</div>
+    <p class="meta">${n.cluster} · age ~${n.age} on the arc · pay ${n.fin}/100, presence-deficit ${n.pres}/100</p>
+    <span class="role-tag" style="background:${mix('#ffffff',CHAIN_COLOR[role],.18)};color:${CHAIN_COLOR[role]};border:1px solid ${mix('#ffffff',CHAIN_COLOR[role],.4)}">value chain · ${CHAIN[role]}</span>
+    <p class="desc-line">${n.what}</p>
+    <p class="mini">Demand themes it serves</p><div class="chips">`;
+  n.themes.forEach(tid=>{html+=`<span class="chip" data-theme="${tid}">${themeById[tid].short}</span>`;});
+  html+=`</div><p class="mini">Where it sits</p><div class="verdict" style="border-left-color:${ageColor(n.age)};margin-bottom:13px">${n.winNote}</div>`;
+  if(layer.couplings&&partners.length){html+=`<p class="mini">Couples most with</p><ul class="coup-list">`;
+    partners.slice(0,5).forEach(({m,s})=>{const pd=pairData(id,m.id);let di=0,dv=-1;LKEYS.forEach((k,i)=>{if(enabled[k]&&pd[i]>dv){dv=pd[i];di=i;}});
+      html+=`<li><button data-a="${id}" data-b="${m.id}"><span style="color:${LOGICS[di].color};font-weight:800">${s}</span><span><span class="ct">${m.short}</span> <span class="cd">— ${LOGICS[di].lab.toLowerCase()}</span></span></button></li>`;});
+    html+=`</ul>`;}
+  const body=document.getElementById('detailBody');body.innerHTML=html;
+  body.querySelectorAll('.coup-list button').forEach(b=>b.addEventListener('click',()=>selectPair(+b.dataset.a,+b.dataset.b)));
+  body.querySelectorAll('.chip[data-theme]').forEach(c=>c.addEventListener('click',()=>{if(!layer.demand)setLayer('demand',true);selectTheme(+c.dataset.theme);}));
+}
+function stepper(a,b,i,val){return `<span class="bar-val"><button class="stp" data-a="${a}" data-b="${b}" data-i="${i}" data-d="-1">−</button>${val}<button class="stp" data-a="${a}" data-b="${b}" data-i="${i}" data-d="1">+</button></span>`}
+function renderPairDetail(a,b){const A=byId[a],B=byId[b],pd=pairData(a,b),s=pairScore(a,b);document.getElementById('detailHead').textContent='Pair';
+  const verdict=s>=5?'Strong tandem — viable mainly <em>together</em>.':s>=3?'Partial tandem — real shared logic, but each could stand with support.':'Weak tandem — adjacent, not interdependent.';
+  let html=`<div class="node-title" style="font-size:14px"><span class="dot" style="background:${ageColor(A.age)}"></span>${A.short}<span style="color:var(--ink-faint)">+</span><span class="dot" style="background:${ageColor(B.age)}"></span>${B.short}</div>
+    <p class="meta">combined ${s} / ${pairMaxEnabled()} under current logics${layer.edit?' · editing on':''}</p>
+    <p class="mini">Coupling by logic</p><div class="bars">`;
+  LOGICS.forEach((l,i)=>{const v=pd[i];const pct=(v/3)*100;
+    html+=`<div class="bar-row"><span>${l.lab}</span><span class="bar-track"><span class="bar-fill" style="width:${pct}%;background:${l.color};opacity:${v?1:.25}"></span></span>${layer.edit?stepper(a,b,i,v):`<span class="bar-val">${v}</span>`}</div>`;});
+  html+=`</div><div class="verdict">${pd[4]}</div><p style="font-size:12px;color:var(--ink-soft);margin:11px 0 0">${verdict}</p>`;
+  const body=document.getElementById('detailBody');body.innerHTML=html;
+  if(layer.edit)body.querySelectorAll('.stp').forEach(btn=>btn.addEventListener('click',()=>{
+    const key=pairKey(+btn.dataset.a,+btn.dataset.b),i=+btn.dataset.i,d=+btn.dataset.d;
+    PAIRS[key][i]=Math.max(0,Math.min(3,PAIRS[key][i]+d));refreshAll();renderPairDetail(a,b);}));
+}
+function renderThemeDetail(tid){const t=themeById[tid],st=themeStats[tid];document.getElementById('detailHead').textContent='Demand theme';
+  let html=`<div class="node-title" style="font-size:15px">${t.name}</div>
+    <p class="meta">${st.total} clusters across life-stages · ${st.founder} Founder, ${st.observed} Observed, ${st.total-st.founder-st.observed} Mentor</p>
+    <p class="mini">Covered by</p><div class="chips">`;
+  if(st.supply.length)st.supply.forEach(n=>html+=`<span class="chip" data-node="${n.id}">${n.short}</span>`);else html+='<span class="empty">No venture piece covers this theme.</span>';
+  html+=`</div><p class="mini">The clusters underneath</p><ul class="coup-list">`;
+  st.clusters.forEach(c=>{html+=`<li><button data-coord="${c.coord}"><span style="color:${STATUS_HEX[c.status]};font-weight:800">${c.coord}</span><span><span class="ct">${c.persona}</span> <span class="cd">— ${c.need}</span></span></button></li>`;});
+  html+=`</ul>`;const body=document.getElementById('detailBody');body.innerHTML=html;
+  body.querySelectorAll('.chip[data-node]').forEach(ch=>ch.addEventListener('click',()=>selectNode(+ch.dataset.node)));
+  body.querySelectorAll('.coup-list button').forEach(b=>b.addEventListener('click',()=>selectCluster(b.dataset.coord)));
+}
+function renderClusterDetail(c){document.getElementById('detailHead').textContent='Cluster '+c.coord;
+  const t=themeById[c.theme];const supply=themeStats[c.theme].supply;
+  let html=`<div class="node-title" style="font-size:14px"><span class="dot" style="background:${STATUS_HEX[c.status]}"></span>${c.persona}</div>
+    <p class="meta">${c.coord} · ${BANDS.find(x=>x.b===c.band).lab} · <b style="color:${STATUS_HEX[c.status]}">${c.status} hypothesis</b></p>
+    <p class="desc-line"><b>Need:</b> ${c.need}</p>
+    <p class="mini">Theme</p><div class="chips"><span class="chip" data-theme="${t.id}">${t.name}</span></div>
+    <p class="mini">Pieces addressing this theme</p><div class="chips">`;
+  if(supply.length)supply.forEach(n=>html+=`<span class="chip" data-node="${n.id}">${n.short}</span>`);else html+='<span class="empty">None yet — open ground.</span>';
+  html+='</div>';const body=document.getElementById('detailBody');body.innerHTML=html;
+  body.querySelectorAll('.chip[data-node]').forEach(ch=>ch.addEventListener('click',()=>selectNode(+ch.dataset.node)));
+  body.querySelectorAll('.chip[data-theme]').forEach(ch=>ch.addEventListener('click',()=>selectTheme(+ch.dataset.theme)));
+}
+
+/* matrix */
+const matrix=document.getElementById('matrix');
+function mixOrange(t){return mix('#f6ead6','#F7941E',t)}
+function buildMatrix(){clear(matrix);const order=NODES.map(n=>n.id);const cell=30,pad=4,labW=132,labH=100,nn=order.length;
+  const w=labW+nn*(cell+pad)+10,h=labH+nn*(cell+pad)+10;matrix.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const outW=Math.max(560,w);matrix.setAttribute('width',outW);matrix.setAttribute('height',h*(outW/w));
+  const maxS=pairMaxEnabled();
+  order.forEach((id,c)=>{const x=labW+c*(cell+pad)+cell/2;const t=el('text',{x,y:labH-8,'text-anchor':'start',class:'age-tick',transform:`rotate(-55 ${x} ${labH-8})`});t.textContent=byId[id].short;t.setAttribute('fill','var(--ink-soft)');t.setAttribute('font-weight','600');matrix.appendChild(t);});
+  order.forEach((rid,r)=>{const y=labH+r*(cell+pad)+cell/2;const tl=el('text',{x:labW-8,y,'text-anchor':'end','dominant-baseline':'middle',class:'age-tick'});tl.textContent=byId[rid].short;tl.setAttribute('fill','var(--ink-soft)');tl.setAttribute('font-weight','600');matrix.appendChild(tl);
+    order.forEach((cid,c)=>{if(c<=r)return;const s=pairScore(rid,cid);const x=labW+c*(cell+pad),yy=labH+r*(cell+pad);const inten=s/maxS;
+      const sel=selPair&&selPair.includes(rid)&&selPair.includes(cid);
+      const rect=el('rect',{x,y:yy,width:cell,height:cell,rx:6,fill:s===0?'#f6f4ef':mixOrange(inten),stroke:sel?'var(--ink)':'#efe9df','stroke-width':sel?2:1,style:'cursor:pointer'});
+      rect.addEventListener('click',()=>{if(pairData(rid,cid)||layer.edit){if(!PAIRS[pairKey(rid,cid)])PAIRS[pairKey(rid,cid)]=[0,0,0,0,'(no rationale yet)'];selectPair(rid,cid);}});
+      const ti=el('title',{});ti.textContent=`${byId[rid].short} + ${byId[cid].short} — ${s}`;rect.appendChild(ti);matrix.appendChild(rect);
+      if(s>0){const tv=el('text',{x:x+cell/2,y:yy+cell/2+.5,'text-anchor':'middle','dominant-baseline':'middle','font-size':11,'font-weight':700,fill:inten>.55?'#fff':'var(--signal-ink)','pointer-events':'none'});tv.textContent=s;matrix.appendChild(tv);}});});
+}
+
+/* demand grid 6x8 */
+const demandGrid=document.getElementById('demandGrid');
+function renderGrid(){clear(demandGrid);const cols=THEMES.length,rows=BANDS.length;
+  const cw=58,ch=50,pad=5,labL=118,labT=84;
+  const w=labL+cols*(cw+pad)+10,h=labT+rows*(ch+pad)+54;demandGrid.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const outW=Math.max(560,w);demandGrid.setAttribute('width',outW);demandGrid.setAttribute('height',h*(outW/w));
+  // column headers
+  THEMES.forEach((t,c)=>{const x=labL+c*(cw+pad)+cw/2;const g=el('text',{x,y:labT-10,'text-anchor':'start',class:'age-tick',transform:`rotate(-40 ${x} ${labT-10})`});g.textContent=t.short;g.setAttribute('font-weight','700');g.setAttribute('fill','var(--ink-soft)');g.style.cursor='pointer';g.addEventListener('click',()=>selectTheme(t.id));demandGrid.appendChild(g);});
+  BANDS.forEach((bd,r)=>{const y=labT+r*(ch+pad)+ch/2;
+    const tl=el('text',{x:labL-8,y:y-6,'text-anchor':'end','dominant-baseline':'middle',class:'age-tick'});tl.textContent=bd.b+' · '+bd.lab;tl.setAttribute('font-weight','700');tl.setAttribute('fill','var(--ink-soft)');demandGrid.appendChild(tl);
+    const tl2=el('text',{x:labL-8,y:y+7,'text-anchor':'end','dominant-baseline':'middle',class:'age-tick'});tl2.textContent='~'+bd.age;demandGrid.appendChild(tl2);
+    THEMES.forEach((t,c)=>{const cl=CLUSTERS.filter(x=>x.band===bd.b&&x.theme===t.id);const x=labL+c*(cw+pad),yy=labT+r*(ch+pad);
+      if(!cl.length){demandGrid.appendChild(el('rect',{x,y:yy,width:cw,height:ch,rx:6,fill:'#f7f5f0',stroke:'#efe9df'}));return;}
+      const main=cl[0];const covered=themeStats[t.id].supply.length>0;
+      const high=selTheme===t.id;
+      const rect=el('rect',{x,y:yy,width:cw,height:ch,rx:6,fill:mix('#ffffff',STATUS_HEX[main.status],.22),stroke:high?'var(--ink)':mix('#ffffff',STATUS_HEX[main.status],.5),'stroke-width':high?2:1,style:'cursor:pointer'});
+      rect.addEventListener('click',()=>selectCluster(main.coord));const ti=el('title',{});ti.textContent=`${main.coord} · ${main.persona} — ${main.need} (${main.status})`;rect.appendChild(ti);demandGrid.appendChild(rect);
+      const cd=el('text',{x:x+8,y:yy+16,'font-size':11,'font-weight':800,fill:STATUS_HEX[main.status]==='#b4ac9f'?'#8a826f':STATUS_HEX[main.status],'pointer-events':'none'});cd.textContent=main.coord+(cl.length>1?' +1':'');demandGrid.appendChild(cd);
+      // supply indicator
+      if(!covered){const g=el('text',{x:x+cw-7,y:yy+16,'text-anchor':'end','font-size':10,'font-weight':800,fill:'#c0392b','pointer-events':'none'});g.textContent='○';demandGrid.appendChild(g);}
+      const nd=el('text',{x:x+7,y:yy+34,'font-size':9,fill:'var(--ink-faint)','pointer-events':'none'});nd.textContent=(main.need.length>15?main.need.slice(0,14)+'…':main.need);demandGrid.appendChild(nd);
+    });});
+  const foot=el('text',{x:labL,y:h-12,'font-size':10.5,fill:'var(--ink-faint)'});foot.textContent='○ = no venture piece yet covers that theme';demandGrid.appendChild(foot);
+}
+
+/* toggles */
+function buildLayerToggles(){const host=document.getElementById('layerToggles');
+  const items=[
+   {k:'demand',lab:'Demand themes',c:'#EA3B2E',d:'Your 49 clusters → 8 need-themes; shows the coverage gaps.'},
+   {k:'couplings',lab:'Couplings',c:'#F7941E',d:'Links between pieces + the tandem shortlist.'},
+   {k:'willingness',lab:'Willingness (arc)',c:'#3FA845',d:'Receiver agreeing-capacity rising with need.'},
+   {k:'linked',lab:'Linked lives (arc)',c:'#F7941E',d:'Buyer → recipient → next buyer; why demand regenerates.'},
+   {k:'edit',lab:'Edit scores',c:'#7C4DD6',d:'Make the coupling numbers yours — steppers in the pair panel.'}
+  ];
+  items.forEach(it=>{const lab=document.createElement('label');lab.className='tgl';lab.dataset.k=it.k;lab.style.setProperty('--c',it.c);
+    lab.innerHTML=`<input type="checkbox" ${layer[it.k]?'checked':''} aria-label="${it.lab}"><span class="swatch"></span><span class="lab">${it.lab}<span class="desc">${it.d}</span></span>`;
+    lab.querySelector('input').addEventListener('change',e=>setLayer(it.k,e.target.checked));host.appendChild(lab);});
+}
+function buildLogicToggles(){const host=document.getElementById('logicToggles');
+  LOGICS.forEach(l=>{const lab=document.createElement('label');lab.className='tgl';lab.style.setProperty('--c',l.color);
+    lab.innerHTML=`<input type="checkbox" checked aria-label="${l.lab}"><span class="swatch"></span><span class="lab">${l.lab}<span class="desc">${l.desc}</span></span>`;
+    lab.querySelector('input').addEventListener('change',e=>{enabled[l.key]=e.target.checked;refreshAll();});host.appendChild(lab);});
+}
+function setLayer(k,v){layer[k]=v;
+  document.getElementById('coverageCard').style.display=layer.demand?'block':'none';
+  document.getElementById('shortCard').style.display=layer.couplings?'block':'none';
+  document.getElementById('logicWrap').classList.toggle('off',!layer.couplings);
+  if(layer.demand)renderGrid();
+  if(layer.demand&&!selTheme&&!selNode)renderCoverage();else if(layer.demand)renderCoverage();
+  // sync checkbox (for programmatic calls)
+  const lab=document.querySelector(`.tgl[data-k="${k}"] input`);if(lab)lab.checked=v;
+  refreshAll();
+}
+function updateLensLocks(){
+  ['willingness','linked'].forEach(k=>{const lab=document.querySelector(`.tgl[data-k="${k}"]`);if(!lab)return;
+    const lock=LENS!=='arc';lab.classList.toggle('disabled',lock);lab.querySelector('input').disabled=lock;});
+}
+function refreshAll(){
+  if(selPair)renderPairDetail(selPair[0],selPair[1]);else if(selNode)renderNodeDetail(selNode);else if(selTheme)renderThemeDetail(selTheme);
+  renderShortlist();if(layer.demand){renderCoverage();renderGrid();}buildMatrix();drawOverlays();drawLinks();
+}
+
+/* lens switch */
+const bArc=document.getElementById('lensArc'),bQuad=document.getElementById('lensQuad'),bChain=document.getElementById('lensChain');
+function setLens(l){LENS=l;bArc.setAttribute('aria-pressed',l==='arc');bQuad.setAttribute('aria-pressed',l==='quad');bChain.setAttribute('aria-pressed',l==='chain');
+  gArcBg.style.transition='opacity .4s';gQuad.style.transition='opacity .4s';gChain.style.transition='opacity .4s';
+  gArcBg.style.opacity=l==='arc'?1:0;gQuad.style.opacity=l==='quad'?1:0;gChain.style.opacity=l==='chain'?1:0;
+  document.getElementById('canvasHint').textContent=l==='arc'?'Lifespan arc — where each piece is delivered on the life course':l==='quad'?'Buyer quadrant — which customer each active-window piece serves':'Value chain — where each piece sits in your stakeholder stack';
+  updateLensLocks();layout();}
+bArc.addEventListener('click',()=>setLens('arc'));bQuad.addEventListener('click',()=>setLens('quad'));bChain.addEventListener('click',()=>setLens('chain'));
+
+/* foot note */
+document.getElementById('footNote').innerHTML='<b>How to read the merge.</b> Coupling scores are a first-pass hypothesis — turn on Edit scores and make them yours. The demand grid is your own 49 clusters, colour = your own status. Two things fall out of laying one over the other: <b>coordination &amp; oversight (theme 2) is the only all-Founder column</b> and it is well covered by supply — the validated core, which is the NRI continuum. <b>Standards/data (theme 7) is entirely Mentor-hypothesis</b>, yet it is exactly what the trust/certification hub serves — so the platform play is a structural bet, not validated pull. And <b>purpose &amp; identity (theme 6)</b> carries Founder-level conviction but is covered only by your weakest, most peripheral pieces (content, clothing, engagement) — the clearest founder-backed open ground; <b>emotional wellbeing (theme 5)</b> is high-need but you’ve logged it almost entirely as Mentor-hypothesis, so it’s unvalidated rather than proven white space.';
+
+/* init */
+initCanvas();buildLayerToggles();buildLogicToggles();buildMatrix();renderGrid();renderShortlist();
+document.getElementById('coverageCard').style.display='none';
+updateLensLocks();
+selectPair(1,2);
+</script>
+</body>
+</html>
